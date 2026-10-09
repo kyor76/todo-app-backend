@@ -8,6 +8,9 @@ export class User extends Document {
 
     @Prop({ required:true }) // agar password wajib diisi
     password: string;
+
+    @Prop({ required: true})
+    username: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

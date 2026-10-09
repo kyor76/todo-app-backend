@@ -7,24 +7,27 @@ export class Todo extends Document {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
     userId: Types.ObjectId; // sbg penghubung ke koleksi user
 
+    @Prop({ type: Types.ObjectId, ref: 'Column', required: true })
+    columnId: Types.ObjectId;
+
     // tugas wajib ada judul
     @Prop({ required: true})
     title: string;
 
     // bagian deskripsi tugas
-    @Prop({ default: '' })
+    @Prop()
     description: string;
 
     // status kanban: todo, in progress, done
-    @Prop({ default: 'To Do' })
+    @Prop()
     status: string; 
     
     // prioritas: low, med, high
-    @Prop({ default: 'Medium' })
+    @Prop()
     priority: string; 
 
     // tenggat waktu tugas
-    @Prop({ type: Date, default: null })
+    @Prop()
     dueDate: Date;
 }
 

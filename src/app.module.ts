@@ -5,6 +5,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { TodosModule } from './todos/todos.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { ColumnsModule } from './columns/columns.module.js';
 
 @Module({
   imports:[
@@ -17,6 +18,7 @@ import { AuthModule } from './auth/auth.module.js';
     MongooseModule.forRoot(process.env.MONGO_URI as string),
     TodosModule,
     AuthModule,
+    ColumnsModule,
 
   ],
   controllers: [AppController],
