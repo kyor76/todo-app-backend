@@ -1,33 +1,58 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards, Req } from "@nestjs/common";
-import { ColumnsService } from "./columns.service.js";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard.js";
-import { CreateColumnDto } from "./dto/create-column.dto.js";
-import { UpdateColumnDto } from "./dto/update-column.dto.js";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Request,
+  UseGuards,
+  Req
+} from '@nestjs/common';
+import { ColumnsService } from './columns.service.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { CreateColumnDto } from './dto/create-column.dto.js';
+import { UpdateColumnDto } from './dto/update-column.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('columns')
 export class ColumnsController {
-    constructor(private readonly columnsService: ColumnsService) {}
+  constructor(private readonly columnsService: ColumnsService) {}
 
-    @Post()
-    create(@Request() req: any, @Body() body: CreateColumnDto) {
+  @Post()
+  async create(@Request() req: any, @Body() body: CreateColumnDto) {
+    console.log('--- DEBUG REQ.USER ---', req.user);
 
-        return this.columnsService.create(body.name, req.user.sub, body.order || 0);
-    }
+    // Jika req.user hanya berisi email, kita bisa cari user-nya dulu di database berdasarkan email:
+    // const dbUser = await this.userModel.findOne({ email: req.user.email });
+    // const userId = dbUser?._id;
 
-    @Get()
-    findAll(@Request() req: any) {
-        return this.columnsService.findAll(req.user.sub);
-    }
+    // ATAU, jika di `req.user` sebenarnya ada properti lain tapi namanya beda (misal `id`, `_id`, atau `userId`):
+    const userId =
+      req.user?.sub || req.user?.userId || req.user?.id || req.user?._id;
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Request() req: any, @Body() body: UpdateColumnDto) {
-        return this.columnsService.update(id, req.user.sub, body);
-    }
+    console.log('--- RESOLVED USER ID ---', userId);
 
-    @Delete(':id')
-    delete(@Param('id') id: string, @Request() req: any) {
-        return this.columnsService.delete(id, req.user.sub);
-    }
+    return this.columnsService.create(body, userId);
+  }
 
+  @Get()
+  findAll(@Request() req: any) {
+    return this.columnsService.findAll(req.user.sub);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Body() body: UpdateColumnDto,
+  ) {
+    return this.columnsService.update(id, req.user.sub, body);
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string, @Request() req: any) {
+    return this.columnsService.delete(id, req.user.sub);
+  }
 }

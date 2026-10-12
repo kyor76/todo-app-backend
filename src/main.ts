@@ -8,6 +8,8 @@ async function bootstrap() {
   // CORS agar frontend bisa nyambung ke API
   app.enableCors();
 
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+
   // pake port dari .env
   await app.listen(process.env.PORT || 3000);
 }
