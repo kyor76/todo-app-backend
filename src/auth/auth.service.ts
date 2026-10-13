@@ -1,14 +1,13 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema.js';
 import * as bcrypt from 'bcrypt';
+import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from '../columns/dto/register.dto.js';
+
+
 
 @Injectable()
 export class AuthService {
@@ -17,11 +16,30 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  // Fitur untuk registrasi
+  // 1. Fungsi bantuan pembuat password format DD-MM-YYYY
+  private generateDatePassword(): string {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+
+    return `${day}-${month}-${year}`;
+  }
+
+  // 2. Fitur untuk registrasi
   async register(registerDto: RegisterDto) {
-    const { email, password, username } = registerDto;
-    // untuk encrypt password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { email, username } = registerDto;
+    
+    const existingUser = await this.userModel.findOne({email});
+    if (existingUser){
+      throw new ConflictException('Email sudah terdaftar!');
+    }
+
+    // Generate password otomatis berupa tanggal hari ini
+    const generatedPassword = this.generateDatePassword();
+
+    // Enkripsi (hash) password otomatis tersebut
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
     const newUser = new this.userModel({
       email,
@@ -30,9 +48,59 @@ export class AuthService {
     });
 
     return await newUser.save();
+  
+
+  // kirim email secara asinkron
+  await this.sendWelcomeEmail(email, username, generatedPassword);
+
+  return{
+    message: 'Registrasi berhasil! Password sementara telah dikirim ke email.',
+    user:{
+      id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+    }
+  };
+}
+
+// 3. Fungsi Pengiriman Email menggunakan Nodemailer
+
+private async sendWelcomeEmail(to: string, username: string, password:string) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth:{
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Admin Kanban" <${process.env.EMAIL_USER}>`,
+        to: to,
+        subject: 'Selamat Datang! Informasi Akun & Password Anda',
+        html: `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2>Halo, ${username}!</h2>
+            <p>Terima kasih telah mendaftar di Aplikasi Kanban To-Do kami.</p>
+            <p>Akun Anda telah berhasil dibuat. Berikut adalah informasi login Anda:</p>
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px;">
+              <p><b>Email:</b> ${to}</p>
+              <p><b>Password Sementara:</b> <span style="color: #d9534f; font-size: 18px; font-weight: bold;">${password}</span></p>
+            </div>
+            <p>Silakan login menggunakan password di atas. Kami sangat menyarankan Anda untuk segera mengubah password ini melalui pengaturan akun nantinya.</p>
+          </div>
+        `,
+    };
+        await transporter.sendMail(mailOptions);
+        console.log(`Email berhasil dikirim ke ${to}`);
+    } catch (error){
+      console.error('Gagal mengirim email pendaftaran:', error);
+    }
   }
 
-  // fitur untuk login
+
+  // 4. fitur untuk login
   async login(user: any) {
     // Ambil ID dari objek user yang ada
     let rawId =
@@ -57,6 +125,28 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
       username: user.username,
       email: user.email,
+    };
+  }
+
+  // 5. Fitur untuk Update Foto Profil
+  async updateProfilePicture(userId: string, filename: string){
+    const updateUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      {profilePicture: filename},
+      {returnDocument: 'after'}
+    );
+
+    if (!updateUser){
+      throw new UnauthorizedException('User tidak ditemukan');
+    }
+
+    return {
+      message: 'Foto profil berhasil diperbarui!',
+      profilePicture: updateUser.profilePicture,
+
+      // URL yang dipakai di tag <img> frontend
+      url: `http://localhost:3000/uploads/profiles/${filename}`
+
     };
   }
 }

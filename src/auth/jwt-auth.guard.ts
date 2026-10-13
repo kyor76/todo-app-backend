@@ -1,10 +1,16 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { privateDecrypt } from 'crypto';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-    constructor(private jwtService: JwtService) {}
+    constructor(
+        private jwtService: JwtService,
+        private configSertvice: ConfigService
+    
+    ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
@@ -20,7 +26,7 @@ export class JwtAuthGuard implements CanActivate {
 
             // memferifikasi apakah token asli dan belum kadaluarsa
             const payload = await this.jwtService.verifyAsync(token, {
-                secret: 'KODE_RAHASIA' // 
+                secret: this.configSertvice.get<string>('JWT_SECRET') // membaca dari .env 
             });
 
             // jika bisa, kita tempelkan data user ke dalam request
