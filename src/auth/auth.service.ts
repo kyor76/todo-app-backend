@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema.js';
@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from '../columns/dto/register.dto.js';
 import { ConfigService } from '@nestjs/config';
 import { PassThrough } from 'stream';
+import { from } from 'rxjs';
 
 
 @Injectable()
@@ -162,6 +163,73 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
       // URL yang dipakai di tag <img> frontend
       url: `http://localhost:3000/uploads/profiles/${filename}`
 
+    };
+  }
+
+  // 6. fungsi untuk buat password random 8 karakter
+  private generateRandomPassword(): string {
+    return Math.random().toString(36).slice(-8); 
+  }
+
+  // 7. untuk mengirim email reset password
+  private async sendResetEmail(to: string, username: string, newPassword: string){
+    try{
+      const emailUser= this.configService.get<string>('EMAIL_USER');
+      const emailPass= this.configService.get<string>('EMAIL_PASS');
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth:{
+          user: emailUser,
+          pass: emailPass,
+        },
+      });
+
+      const mailOptions = {
+        from: `"Admin Kanban" <${emailUser}>`,
+        to: to,
+        subject: 'Pemberitahuan Reset Password Akun Anda',
+        html: `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2>Halo, ${username}!</h2>
+            <p>Kami menerima permintaan untuk melakukan reset password pada akun Kanban To-Do Anda.</p>
+            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 5px solid #ffc107;">
+              <p><b>Password Baru Anda:</b> <span style="color: #d9534f; font-size: 18px; font-weight: bold; letter-spacing: 2px;">${newPassword}</span></p>
+            </div>
+            <p>Silakan login menggunakan password baru di atas. Jika Anda tidak pernah meminta reset password, abaikan email ini.</p>
+          </div>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`Email Reset Password berhasil dikirim ke ${to}`);
+    } catch (error) {
+      console.error('Gagal mengirim email reset password:', error);
+    }
+  }
+
+  // 8. fitur utama reset password
+  async resetPassword(email: string){
+    // untuk mencari user berdasarkan email
+    const user = await this.userModel.findOne({email});
+    if (!user){
+      throw new NotFoundException('Email tidak terdaftar di sistem kami!');
+    }
+
+    // untuk buat password random baru dan di hash
+    const newPassword = this.generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // untuk update password di db
+    user.password = hashedPassword;
+    await user.save();
+
+    // untuk mengirim email password baru
+    await this.sendResetEmail(user.email, user.username, newPassword);
+
+    // respon berhasil
+    return{
+      message: 'Password berhasil direset! Silahkan cek email anda untuk mendapatkan password baru.'
     };
   }
 }

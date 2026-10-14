@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from '../columns/dto/register.dto.js';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -19,6 +19,14 @@ export class AuthController {
     @Post('login')
     async login(@Body() body: any) {
         return this.authService.login(body); 
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body('email') email: string){
+        if (!email){
+            throw new BadRequestException('Kolom email tidak boleh kosong!');
+        }
+        return this.authService.resetPassword(email);
     }
 
     @UseGuards(JwtAuthGuard)
