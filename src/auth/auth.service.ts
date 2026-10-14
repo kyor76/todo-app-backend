@@ -6,7 +6,8 @@ import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from '../columns/dto/register.dto.js';
-
+import { ConfigService } from '@nestjs/config';
+import { PassThrough } from 'stream';
 
 
 @Injectable()
@@ -14,6 +15,8 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
+    private configService: ConfigService,
+    
   ) {}
 
   // 1. Fungsi bantuan pembuat password format DD-MM-YYYY
@@ -47,18 +50,17 @@ export class AuthService {
       username,
     });
 
-    return await newUser.save();
-  
+    await newUser.save();
+    // untuk kirim email secara asinkron
+    await this.sendWelcomeEmail(email, username, generatedPassword);
 
-  // kirim email secara asinkron
-  await this.sendWelcomeEmail(email, username, generatedPassword);
-
-  return{
-    message: 'Registrasi berhasil! Password sementara telah dikirim ke email.',
-    user:{
-      id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
+    // respon
+    return{
+      message: 'Registrasi berhasil! Password sementara telah dikirim ke email.',
+      user:{
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
     }
   };
 }
@@ -67,11 +69,23 @@ export class AuthService {
 
 private async sendWelcomeEmail(to: string, username: string, password:string) {
   try {
+
+    // mengambil data dari .env menggunakan ConfigService NestJS
+    const emailUser = this.configService.get<string>('EMAIL_USER');
+    const emailPass = this.configService.get<string>('EMAIL_PASS');
+
+    // untuk menegcek kalau .env kosong
+    if (!emailUser || !emailPass){
+      console.error('ERROR: Kredensial EMAIL_USER atau EMAIL_PASS di .env kosong/tidak terbaca!');
+        return;
+    }
+
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth:{
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: emailUser,
+        pass: emailPass,
       },
     });
 
@@ -92,8 +106,9 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
           </div>
         `,
     };
-        await transporter.sendMail(mailOptions);
-        console.log(`Email berhasil dikirim ke ${to}`);
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email berhasil terkirim ke ${to} (MessageID: ${info.messageId})`);
     } catch (error){
       console.error('Gagal mengirim email pendaftaran:', error);
     }
