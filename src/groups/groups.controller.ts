@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Request, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Param, Request, UseGuards, Patch, BadGatewayException, BadRequestException } from '@nestjs/common';
 import { GroupsService } from './groups.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { Invitation } from './schemas/invitation.schema.js';
@@ -17,7 +17,7 @@ export class GroupsController {
     }
 
     // 2. endpoint untuk update kuota anggota
-    @Patch(':groupId/invitations')
+    @Post(':groupId/invitations')
     async createInvitation(
         @Param('groupId') groupId: string,
         @Body('maxUses') maxUses: number,
@@ -46,6 +46,19 @@ export class GroupsController {
   ) {
     const ownerId = req.user.sub || req.user.id;
     return this.groupsService.revokeInvitation(invitationId, ownerId);
+  }
+
+  // 5. Endpoint untuk join ke grup pake token
+  @Post('join')
+  async joinGroup(
+    @Body('token') token: string,
+    @Request() req: any
+  ){
+    if (!token){
+        throw new BadRequestException('Token undangan tidak bokeh kosong.');
+    }
+    const userId = req.user.sub || req.user.id;
+    return this.groupsService.joinGroupByToken(token, userId);
   }
 
 }

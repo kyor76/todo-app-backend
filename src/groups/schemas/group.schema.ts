@@ -14,7 +14,7 @@ export class Group extends Document{
 
     // daftar anggota grup
     @Prop({ type: [{type: Types.ObjectId, ref: 'User'}] })
-    member: Types.ObjectId[];
+    members: Types.ObjectId[];
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);

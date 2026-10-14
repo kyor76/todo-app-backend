@@ -4,6 +4,7 @@ import { Model, Types} from 'mongoose';
 import { Group } from './schemas/group.schema.js';
 import { Invitation } from './schemas/invitation.schema.js';
 import * as crypto from 'crypto';
+import { waitForDebugger } from 'inspector';
 
 @Injectable()
 export class GroupsService {
@@ -86,6 +87,55 @@ export class GroupsService {
         invitation.isRevoked = true;
         await invitation.save();
         return{ message:'Link undangan berhasil dinonaktifkan (dicabut paksa).' };
+    }
+
+    // 5. untuk fitur Bergabung ke grup dengan token
+    async joinGroupByToken(token: string, userId: string){
+
+        // mencari undangan berdasarkan token
+        const invitation = await this.invitationModel.findOne({token});
+        if (!invitation){
+            throw new NotFoundException('Link undangan tidak falid atau tidak ditemukan.');
+        }
+
+        // untuk cek status aktif, kadaluarsa, dan kuota
+        if (invitation.isRevoked){
+            throw new BadGatewayException('Link undangan ini sudah dinonaktifkan oleh pembuat grup.');
+        }
+        if (invitation.expireAt < new Date()){
+            throw new BadGatewayException('Masa berlaku link undangan sudah habis.');
+        }
+        if (invitation.currentUses >= invitation.maxUses){
+            throw new BadGatewayException('Kuota grup sudah penuh.');
+        }
+
+        // untuk mencari grup yang terkait dengan undangan ini
+        const group = await this.groupModel.findById(invitation.groupId) as any;
+        if (!group){
+            throw new NotFoundException('Grup tidak ditemukan.');
+        }
+        if (!group.members){
+            group.members = [];
+        }
+
+        // untuk mengecek apakah user sudah ada di grup, untuk mencegah duplikat
+        const isAlreadyMember = group.members.some((memberId: any) => memberId.toString() === userId);
+        if (isAlreadyMember){
+            throw new BadRequestException('Anda sudah tergabung dalam grup ini.');
+        }
+
+        // untuk menambahkan daftar anggota di grup dan menambah angka pengguna link
+        group.members.push(new Types.ObjectId(userId));
+        invitation.currentUses += 1;
+
+        // untuk menyimpan perubahan ke db
+        await group.save();
+        await invitation.save();
+
+        return {
+            message: `Berhasil bergabung dengan grup: ${group.name}`,
+            groupId: group._id
+        };
     }
 }
 
