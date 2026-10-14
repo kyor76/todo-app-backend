@@ -6,6 +6,7 @@ import { AppService } from './app.service.js';
 import { TodosModule } from './todos/todos.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ColumnsModule } from './columns/columns.module.js';
+import { GroupsModule } from './groups/groups.module.js';
 
 @Module({
   imports:[
@@ -19,6 +20,7 @@ import { ColumnsModule } from './columns/columns.module.js';
     TodosModule,
     AuthModule,
     ColumnsModule,
+    GroupsModule,
 
   ],
   controllers: [AppController],

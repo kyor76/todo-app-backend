@@ -17,9 +17,12 @@ export class AuthController {
     }
 
     @Post('login')
-    async login(@Body() body: any) {
-        return this.authService.login(body); 
+  async login(@Body() body: any) {
+    if (!body.email || !body.password) {
+      throw new BadRequestException('Email dan password tidak boleh kosong!');
     }
+    return this.authService.login(body.email, body.password);
+  }
 
     @Post('reset-password')
     async resetPassword(@Body('email') email: string){
@@ -27,6 +30,14 @@ export class AuthController {
             throw new BadRequestException('Kolom email tidak boleh kosong!');
         }
         return this.authService.resetPassword(email);
+    }
+
+    @Post('confirm-reset')
+    async confirmResetPassword(@Body() body: { token: string; newPassword: string }) {
+        if (!body.token || !body.newPassword) {
+        throw new BadRequestException('Token dan Password Baru tidak boleh kosong!');
+        }
+        return this.authService.confirmResetPassword(body.token, body.newPassword);
     }
 
     @UseGuards(JwtAuthGuard)

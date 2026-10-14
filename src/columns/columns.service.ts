@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Column } from './columns.schema.js';
@@ -33,5 +33,15 @@ export class ColumnsService {
     return await this.columnModel
       .findOneAndDelete({ _id: id, userId: userId })
       .exec();
+  }
+
+  async updateOrder(id: string, order: number) {
+    const updatedColumn = await this.columnModel
+      .findByIdAndUpdate(id, { order }, { new: true })
+      .exec();
+    if (!updatedColumn) {
+      throw new NotFoundException('Column tidak ditemukan');
+    }
+    return { message: 'Urutan berhasil diperbarui', updatedColumn };
   }
 }

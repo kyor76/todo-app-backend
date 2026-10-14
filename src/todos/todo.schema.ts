@@ -29,6 +29,9 @@ export class Todo extends Document {
     // tenggat waktu tugas
     @Prop()
     dueDate: Date;
+
+    @Prop({ default: false})
+    isCompleted: boolean;
 }
 
 export const TodoSchema = SchemaFactory.createForClass(Todo);

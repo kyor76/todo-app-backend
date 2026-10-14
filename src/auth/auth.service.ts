@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User } from './user.schema.js';
 import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
+import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from '../columns/dto/register.dto.js';
 import { ConfigService } from '@nestjs/config';
@@ -117,33 +118,28 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
 
 
   // 4. fitur untuk login
-  async login(user: any) {
-    // Ambil ID dari objek user yang ada
-    let rawId =
-      user?._id || user?.id || (user?.toObject ? user.toObject()._id : null);
-
-    // Jika _id masih tidak ada tapi email tersedia, cari langsung ke database untuk memastikan ID-nya didapat
-    if (!rawId && user?.email) {
-      const dbUser = await this.userModel.findOne({ email: user.email }).exec();
-      if (dbUser) {
-        rawId = dbUser._id;
+  async login(email: string, pass: string) {
+      // untuk Cari user berdasarkan email
+      const user = await this.userModel.findOne({ email });
+      
+      // untuk Proteksi jika user tidak ditemukan (Ini yang mencegah error 'undefined' tadi!)
+      if (!user) {
+        throw new UnauthorizedException('Email tidak terdaftar!');
       }
+
+      // untuk Cek kecocokan password
+      const isMatch = await bcrypt.compare(pass, user.password);
+      if (!isMatch) {
+        throw new UnauthorizedException('Password salah!');
+      }
+
+      // untuk Buat JWT Token jika semua aman
+      const payload = { username: user.username, sub: user._id };
+      return {
+        access_token: this.jwtService.sign(payload),
+        message: 'Login berhasil!'
+      };
     }
-
-    const userId = rawId ? rawId.toString() : null;
-
-    const payload = {
-      email: user?.email,
-      sub: userId,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      username: user.username,
-      email: user.email,
-    };
-  }
-
   // 5. Fitur untuk Update Foto Profil
   async updateProfilePicture(userId: string, filename: string){
     const updateUser = await this.userModel.findByIdAndUpdate(
@@ -166,70 +162,96 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
     };
   }
 
-  // 6. fungsi untuk buat password random 8 karakter
-  private generateRandomPassword(): string {
-    return Math.random().toString(36).slice(-8); 
-  }
-
-  // 7. untuk mengirim email reset password
-  private async sendResetEmail(to: string, username: string, newPassword: string){
-    try{
-      const emailUser= this.configService.get<string>('EMAIL_USER');
-      const emailPass= this.configService.get<string>('EMAIL_PASS');
+  // 6. Fungsi Pengiriman Email Link Reset Password
+  private async sendResetEmailLink(to: string, username: string, resetToken: string) {
+    try {
+      const emailUser = this.configService.get<string>('EMAIL_USER');
+      const emailPass = this.configService.get<string>('EMAIL_PASS');
 
       const transporter = nodemailer.createTransport({
         service: 'gmail',
-        auth:{
+        auth: {
           user: emailUser,
           pass: emailPass,
         },
       });
+      const resetLink = `http://localhost:3000/auth/confirm-reset?token=${resetToken}`;
 
       const mailOptions = {
         from: `"Admin Kanban" <${emailUser}>`,
         to: to,
-        subject: 'Pemberitahuan Reset Password Akun Anda',
+        subject: 'Permintaan Reset Password Akun Anda',
         html: `
           <div style="font-family: sans-serif; padding: 20px;">
             <h2>Halo, ${username}!</h2>
             <p>Kami menerima permintaan untuk melakukan reset password pada akun Kanban To-Do Anda.</p>
-            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 5px solid #ffc107;">
-              <p><b>Password Baru Anda:</b> <span style="color: #d9534f; font-size: 18px; font-weight: bold; letter-spacing: 2px;">${newPassword}</span></p>
+            <p>Silakan klik link atau salin URL di bawah ini untuk membuat password baru. Link ini hanya berlaku selama <strong>1 jam</strong>.</p>
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; word-wrap: break-word;">
+              <a href="${resetLink}" style="color: #007bff; font-weight: bold; text-decoration: none;">${resetLink}</a>
             </div>
-            <p>Silakan login menggunakan password baru di atas. Jika Anda tidak pernah meminta reset password, abaikan email ini.</p>
+            <p>Jika Anda tidak pernah meminta reset password, abaikan email ini dan akun Anda akan tetap aman.</p>
           </div>
         `,
       };
 
       await transporter.sendMail(mailOptions);
-      console.log(`Email Reset Password berhasil dikirim ke ${to}`);
+      console.log(`Email Link Reset Password berhasil dikirim ke ${to}`);
     } catch (error) {
-      console.error('Gagal mengirim email reset password:', error);
+      console.error('Gagal mengirim email link reset password:', error);
     }
   }
 
-  // 8. fitur utama reset password
-  async resetPassword(email: string){
-    // untuk mencari user berdasarkan email
-    const user = await this.userModel.findOne({email});
-    if (!user){
+  // 7. Fitur Request Reset Password (Menghasilkan Token)
+  async resetPassword(email: string) {
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
       throw new NotFoundException('Email tidak terdaftar di sistem kami!');
     }
 
-    // untuk buat password random baru dan di hash
-    const newPassword = this.generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // Buat token unik acak sepanjang 32 karakter
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    // Set waktu kedaluwarsa token (1 jam dari sekarang)
+    const expireDate = new Date();
+    expireDate.setHours(expireDate.getHours() + 1);
 
-    // untuk update password di db
-    user.password = hashedPassword;
-    await user.save();
+    // Simpan token dan batas waktu ke database user
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = expireDate;
+    await user.save(); 
 
-    // untuk mengirim email password baru
-    await this.sendResetEmail(user.email, user.username, newPassword);
+    // Kirim email berisi link token
+    await this.sendResetEmailLink(user.email, user.username, resetToken);
 
-    // respon berhasil
-    return{
-      message: 'Password berhasil direset! Silahkan cek email anda untuk mendapatkan password baru.'
+    return {
+      message: 'Link reset password telah dikirim ke email Anda. Silakan cek inbox atau folder spam.'
     };
   }
+
+  // 8. Fitur Konfirmasi Reset Password (Input Password Baru)
+  async confirmResetPassword(token: string, newPassword: string) {
+    // Cari user berdasarkan token yang cocok DAN waktunya belum expired
+    const user = await this.userModel.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }, //$gt = greater than (sekarang belum melebihi batas expire)
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Token reset password tidak valid atau sudah kedaluwarsa!');
+    }
+
+    // Hash password baru yang dikirimkan user
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password, dan HAPUS token agar tidak bisa dipakai 2 kali
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    return {
+      message: 'Password Anda berhasil diubah! Silakan login dengan password baru Anda.'
+    };
+  }
+
 }

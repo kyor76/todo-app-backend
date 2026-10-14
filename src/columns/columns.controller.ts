@@ -55,4 +55,9 @@ export class ColumnsController {
   delete(@Param('id') id: string, @Request() req: any) {
     return this.columnsService.delete(id, req.user.sub);
   }
+
+  @Patch(':id/order')
+  async updateOrder(@Param('id') id: string, @Body('order') order: number) {
+    return this.columnsService.updateOrder(id, order);
+  }
 }

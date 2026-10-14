@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsOptional, IsString, IsBoolean } from "class-validator";
 
 export class UpdateTodoDto {
     @IsString()
@@ -20,4 +20,8 @@ export class UpdateTodoDto {
     @IsString()
     @IsOptional()
     columnId?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    isCompleted?: boolean;
 }
