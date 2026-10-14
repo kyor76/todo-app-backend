@@ -10,17 +10,25 @@ export class ColumnsService {
 
   // Ubah parameter menjadi menerima DTO dan userId
   async create(createColumnDto: CreateColumnDto, userId: string) {
-    const { name, order } = createColumnDto;
+    const { name, order, groupId } = createColumnDto;
     const newColumn = new this.columnModel({
       name,
       userId, // Pastikan userId ini tidak undefined
       order: order || 0,
+      groupId,
     });
     return await newColumn.save();
   }
 
   async findAll(userId: string) {
-    return await this.columnModel.find({ userId }).sort({ order: 1 }).exec();
+    return await this.columnModel.find({ 
+      userId: userId,
+      groupId: { $exists: false } 
+    }).sort({ order: 1 }).exec();
+  }
+
+  async getColumnsByGroup(groupId: string){
+    return this.columnModel.find({ groupId }).sort ({ order: 1 }).exec();
   }
 
   async update(id: string, userId: string, updateData: any) {

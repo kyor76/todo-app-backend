@@ -39,7 +39,13 @@ export class ColumnsController {
 
   @Get()
   findAll(@Request() req: any) {
-    return this.columnsService.findAll(req.user.sub);
+    const userId = req.user.sub || req.user.id;
+    return this.columnsService.findAll(userId);
+  }
+
+  @Get('group/:groupId')
+  async getColumnsByGroup(@Param('groupId') groupId: string){
+    return this.columnsService.getColumnsByGroup(groupId);
   }
 
   @Patch(':id')

@@ -32,6 +32,9 @@ export class Todo extends Document {
 
     @Prop({ default: false})
     isCompleted: boolean;
+
+    @Prop({ type: Types.ObjectId, ref: 'Group', required: false })
+    groupId?: Types.ObjectId;
 }
 
 export const TodoSchema = SchemaFactory.createForClass(Todo);

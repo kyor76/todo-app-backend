@@ -42,4 +42,10 @@ export class TodosController {
         const userId = req.user.id || req.user._id || req.user.sub;
         return this.todosService.remove(id, userId);
     }
+
+    @Get('group/:groupId')
+    async getTodosByGroup(@Param('groupId') groupId: string) {
+        return this.todosService.getTodosByGroup(groupId);
+  }
+
 }

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsMongoId } from "class-validator";
 
 export class CreateColumnDto {
     @IsString()
@@ -8,4 +8,8 @@ export class CreateColumnDto {
     @IsNumber()
     @IsOptional()
     order?: number;
+
+    @IsOptional()
+    @IsMongoId()
+    groupId: string;
 }

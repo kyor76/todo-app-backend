@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsNotEmpty, IsOptional, IsString, IsMongoId } from "class-validator";
 
 export class CreateTodoDto {
     @IsString()
@@ -20,4 +20,8 @@ export class CreateTodoDto {
     @IsString()
     @IsNotEmpty()
     columnId: string;
+
+    @IsOptional()
+    @IsMongoId()
+    groupId?: string;
 }

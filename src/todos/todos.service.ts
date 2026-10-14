@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Todo } from './todo.schema.js';
+import { CreateTodoDto } from './dto/create-todo.dto.js';
 
 @Injectable()
 export class TodosService {
@@ -9,17 +10,25 @@ export class TodosService {
     constructor(@InjectModel(Todo.name) private todoModel: Model<Todo>) {}
 
     // 1. CREATE untuk menambahkan tugas baru + userId pemiliknya
-    async create(userId: string, createDate: any): Promise<Todo>{
-        const newTodo = new this.todoModel({
-            ...createDate,
-            userId: userId, // untuk menempelkan id pembuat tugas
-        });
-        return newTodo.save(); 
+    async create(userId: string, createTodoDto: CreateTodoDto) {
+  const newTodo = new this.todoModel({
+    ...createTodoDto,
+    userId: userId,
+  });
+  return await newTodo.save();
+}
+
+    // 2  Ambil Todo PERSONAL login
+    async findAll(userId: string){
+        return this.todoModel.find({ 
+            userId: userId,
+            groupId: {$exists:false}
+         }).exec();
     }
 
-    // 2 READ Hanya mengambil daftar tugas yang userId-nya cocok dengan user yang sedang login
-    async findAll(userId: string): Promise<Todo[]> {
-        return this.todoModel.find({ userId: userId }).exec();
+    // ambil todo grup
+    async getTodosByGroup(groupId: string) {
+    return this.todoModel.find({ groupId }).exec();
     }
 
     // 3, UPDATE Memperbarui data Kanban (misal: geser kartu dari 'To Do' ke 'In Progress')

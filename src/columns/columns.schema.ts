@@ -12,6 +12,9 @@ export class Column extends Document {
 
     @Prop({ default: 0 })
     order: number;
+
+    @Prop({ type: Types.ObjectId, ref: 'Group', required: false })
+    groupId: Types.ObjectId;
 }
 
 export const ColumnSchema = SchemaFactory.createForClass(Column);
