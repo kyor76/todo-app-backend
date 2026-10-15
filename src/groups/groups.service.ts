@@ -5,6 +5,8 @@ import { Group } from './schemas/group.schema.js';
 import { Invitation } from './schemas/invitation.schema.js';
 import * as crypto from 'crypto';
 import { waitForDebugger } from 'inspector';
+import strict from 'assert/strict';
+import { UnsubscriptionError } from 'rxjs';
 
 @Injectable()
 export class GroupsService {
@@ -136,6 +138,84 @@ export class GroupsService {
             message: `Berhasil bergabung dengan grup: ${group.name}`,
             groupId: group._id
         };
+    }
+
+    // 6 untuk mengambil daftar grup yg dimiliki/diikuti user
+    async getUserGroups(userId: string){
+      return await this.groupModel.find({
+        $or: [
+          {owner: new Types.ObjectId(userId)},
+          {member: new Types.ObjectId(userId)},
+          {members: new Types.ObjectId(userId)}
+        ]
+      }).exec();
+    }
+
+    // 7. fitur untuk keluar dari grup
+    async leaveGroup(groupId: string, userId: string){
+        const group = await this.groupModel.findById(groupId) as any;
+        if (!group) throw new NotFoundException('Grup tidak ditemukan.');
+
+        // untuk cegah owner grup keluar dari grup
+        if (group.owner.toString() === userId ){
+            throw new BadRequestException('Pembuat grup tidak bisa keluar. Silahkan hapus grup jika ingin membubarkannya');
+        }
+
+        // untuk hapus user dari array members
+        group.members = group.members.filter((id: any) => id.toString() !== userId);
+        
+        if (group.member){
+            group.member = group.member.filter((id: any) => id.toString() !== userId);
+        }
+
+        await group.save();
+            return {message: ' Berhasil keluar dari grup.'};
+    }
+
+    // 8. fitur untuk mengeluarkan anggota
+    async kickMember(groupId: string, memberId: string, ownerId: string){
+        const group = await this.groupModel.findById(groupId) as any;
+        if (!group) throw new NotFoundException('Grup ini tidak ditemukan.');
+
+        // hanya pembuat grup yg bisa mengeluarkan
+        if (group.owner.toString() !== ownerId){
+            throw new UnauthorizedException('Hanya pembuat grup yang bisa mengeluarkan anggota');
+        }
+
+        // mencegah owner tidak sengaja mengeluarkan dirinya
+        if (memberId === ownerId){
+            throw new BadRequestException('Anda tidak bisa mengeluarkan diri sendiri dari grup');
+        }
+
+        // filter member yg dikeluarkan (Hanya dieksekusi jika array-nya ada)
+        if (group.members){
+            group.members = group.members.filter((id: any) => id.toString() !== memberId);
+        }
+        if (group.member){
+            group.member = group.member.filter((id: any) => id.toString() !== memberId);
+        }
+
+        await group.save();
+        return {message: 'Anggota berhasil dikeluarkan dari grup.'};
+    }
+
+    // 9. fitur untuk hapus grup permanen
+    async deleteGroup(groupId: string, ownerId: string){
+        const group = await this.groupModel.findById(groupId);
+        if (!group) throw new NotFoundException('Grup ini tidak ditemukan');
+
+        // hanya owner yg bisa hapus grup
+        if (group.owner.toString() !== ownerId){
+            throw new UnauthorizedException('Hanya pembuat grup yang bisa menghapus grup.');
+        }
+
+        // hapus grup dari database
+        await this.groupModel.findByIdAndDelete(groupId);
+
+        // hapus juga semua link undangan yg terikat dgn grup ini
+        await this.invitationModel.deleteMany({ groupId: groupId});
+        return {message: 'Grup beserta link undangannya berhasil dihapus secara permanen.'};
+
     }
 }
 

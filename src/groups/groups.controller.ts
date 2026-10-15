@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Request, UseGuards, Patch, BadGatewayException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Delete, Param, Request, UseGuards, Patch, BadGatewayException, BadRequestException, Req } from '@nestjs/common';
 import { GroupsService } from './groups.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { Invitation } from './schemas/invitation.schema.js';
@@ -28,37 +28,74 @@ export class GroupsController {
         return this.groupsService.createInvitation(groupId, ownerId ,maxUses, expiresInDays);
     }
     // 3. Endpoint untuk mengedit kuota
-  @Patch('invitations/:invitationId/max-uses')
-  async updateMaxUses(
-    @Param('invitationId') invitationId: string,
-    @Body('newMaxUses') newMaxUses: number,
-    @Request() req: any
-  ) {
-    const ownerId = req.user.sub || req.user.id;
-    return this.groupsService.updateMaxUses(invitationId, ownerId, newMaxUses);
-  }
-
-  // 4. Endpoint untuk mencabut link secara manual
-  @Patch('invitations/:invitationId/revoke')
-  async revokeInvitation(
-    @Param('invitationId') invitationId: string,
-    @Request() req: any
-  ) {
-    const ownerId = req.user.sub || req.user.id;
-    return this.groupsService.revokeInvitation(invitationId, ownerId);
-  }
-
-  // 5. Endpoint untuk join ke grup pake token
-  @Post('join')
-  async joinGroup(
-    @Body('token') token: string,
-    @Request() req: any
-  ){
-    if (!token){
-        throw new BadRequestException('Token undangan tidak bokeh kosong.');
+    @Patch('invitations/:invitationId/max-uses')
+    async updateMaxUses(
+      @Param('invitationId') invitationId: string,
+      @Body('newMaxUses') newMaxUses: number,
+      @Request() req: any
+    ) {
+      const ownerId = req.user.sub || req.user.id;
+      return this.groupsService.updateMaxUses(invitationId, ownerId, newMaxUses);
     }
-    const userId = req.user.sub || req.user.id;
-    return this.groupsService.joinGroupByToken(token, userId);
-  }
 
+    // 4. Endpoint untuk mencabut link secara manual
+    @Patch('invitations/:invitationId/revoke')
+    async revokeInvitation(
+      @Param('invitationId') invitationId: string,
+      @Request() req: any
+    ) {
+      const ownerId = req.user.sub || req.user.id;
+      return this.groupsService.revokeInvitation(invitationId, ownerId);
+    }
+
+    // 5. Endpoint untuk join ke grup pake token
+    @Post('join')
+    async joinGroup(
+      @Body('token') token: string,
+      @Request() req: any
+    ){
+      if (!token){
+          throw new BadRequestException('Token undangan tidak bokeh kosong.');
+      }
+      const userId = req.user.sub || req.user.id;
+      return this.groupsService.joinGroupByToken(token, userId);
+    }
+
+    // endpoint untuk mengambil daftar grup milik user
+    @Get()
+    async getMyGroups(@Request() req: any){
+      const userId = req.user.sub || req.user.id;
+      return this.groupsService.getUserGroups(userId);
+    }
+
+    // endpoint untuk member keluar dari grup
+    @Patch(':groupId/leave')
+    async leaveGroup(
+      @Param('groupId') groupId: string,
+      @Request() req: any
+    ){
+      const userId = req.user.sub || req.user.id;
+      return this.groupsService.leaveGroup(groupId, userId);
+    }
+
+    // endpoint untuk hanya owner yg mengeluarkan anggota
+    @Patch(':groupId/kick/:memberId')
+    async kickMember(
+      @Param('groupId') groupId: string,
+      @Param('memberId') memberId: string,
+      @Request() req: any
+    ){
+      const ownerId = req.user.sub || req.user.id;
+      return this.groupsService.kickMember(groupId, memberId, ownerId);
+    }
+
+    // endpoint untuk hanya owner yg bisa menghapus grup
+    @Delete(':groupId')
+    async deleteGroup(
+      @Param('groupId') groupId: string,
+      @Request() req: any
+    ) {
+      const ownerId = req.user.sub || req.user.id;
+      return this.groupsService.deleteGroup(groupId, ownerId);
+    }
 }

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Column } from './columns.schema.js';
-import { CreateColumnDto } from './dto/create-column.dto.js'; // Jangan lupa import DTO
+import { CreateColumnDto } from './dto/create-column.dto.js';
 
 @Injectable()
 export class ColumnsService {
