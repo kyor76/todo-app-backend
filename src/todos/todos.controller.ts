@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request }
 import { TodosService } from './todos.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { CreateTodoDto } from './dto/create-todo.dto.js';
+import { CreateCommentDto } from './dto/create-comment.dto.js';
 
 @Controller('todos')
 @UseGuards(JwtAuthGuard)
@@ -46,6 +47,16 @@ export class TodosController {
     @Get('group/:groupId')
     async getTodosByGroup(@Param('groupId') groupId: string) {
         return this.todosService.getTodosByGroup(groupId);
-  }
+    }
+
+    @Post(':id/comments')
+    async addComment(
+        @Param('id') todoId: string,
+        @Body() CreateCommentDto: CreateCommentDto,
+        @Request() req: any,
+    ){
+        const userId = req.user.sub || req.user.id;
+        return this.todosService.addComment(todoId, userId, CreateCommentDto);
+    }
 
 }

@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Todo } from './todo.schema.js';
 import { CreateTodoDto } from './dto/create-todo.dto.js';
+import { CreateColumnDto } from '../columns/dto/create-column.dto.js';
+import { CreateCommentDto } from './dto/create-comment.dto.js';
 
 @Injectable()
 export class TodosService {
@@ -54,5 +56,26 @@ export class TodosService {
             throw new NotFoundException('Tugas tidak ditemukan atau Anda tidak memiliki akses!');
         }
         return { message: 'Tugas berhasil dihapus' };
+    }
+
+    // untuk menambahkan komentar ke dalam sebuah todo
+    async addComment(todoId: string, userId: string, createCommentDto: CreateCommentDto){
+        const todo = await this.todoModel.findById(todoId);
+        if (!todo){
+            throw new NotFoundException('Tugas (Todo) tidak ditemukan.');
+        }
+
+        // untuk memastikan array comment ada
+        if (!todo.comments){
+            todo.comments = [];
+        }
+
+        // untuk masukkan komentar baru ke dalam array
+        todo.comments.push({
+            userId: new Types.ObjectId(userId),
+            content: createCommentDto.content,
+        } as any);
+
+        return await todo.save();
     }
 }

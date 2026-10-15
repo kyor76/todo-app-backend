@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import {Document, Types } from 'mongoose';
+import { Comment, CommentSchema } from './schemas/comment.schema.js';
+
 
 @Schema({ timestamps: true })  // timestamps akan otomatis buat createdAt dan updatedAt
 export class Todo extends Document {
@@ -35,6 +37,10 @@ export class Todo extends Document {
 
     @Prop({ type: Types.ObjectId, ref: 'Group', required: false })
     groupId?: Types.ObjectId;
+
+    // untuk komentar
+    @Prop({ type: [CommentSchema], default: [] })
+    comments: Comment[];
 }
 
 export const TodoSchema = SchemaFactory.createForClass(Todo);

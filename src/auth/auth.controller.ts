@@ -44,7 +44,7 @@ export class AuthController {
     @Post('profile/upload')
     @UseInterceptors(FileInterceptor('file',{
         storage: diskStorage({
-            destination: '.uploads/profiles',
+            destination: 'uploads/profiles',
             filename: (req: any, file, cb) => {
 
                 // Ambil ID user untuk dijadikan nama file agar tidak bentrok
