@@ -141,12 +141,17 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
       };
     }
   // 5. Fitur untuk Update Foto Profil
-  async updateProfilePicture(userId: string, filename: string){
+  async updateProfilePicture(userId: string, filename: string, newUsername?: string){
+    const updateData: any = { profilePicture: filename };
+    if (newUsername){
+      updateData.username = newUsername;
+    }
+
     const updateUser = await this.userModel.findByIdAndUpdate(
       userId,
-      {profilePicture: filename},
+      updateData,
       {returnDocument: 'after'}
-    );
+    ).exec();
 
     if (!updateUser){
       throw new UnauthorizedException('User tidak ditemukan');
@@ -155,6 +160,7 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
     return {
       message: 'Foto profil berhasil diperbarui!',
       profilePicture: updateUser.profilePicture,
+      username: updateUser.username,
 
       // URL yang dipakai di tag <img> frontend
       url: `http://localhost:3000/uploads/profiles/${filename}`

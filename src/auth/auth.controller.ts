@@ -59,7 +59,11 @@ export class AuthController {
             }
         })
     }))
-    uploadAvatar(@Request() req: any, @UploadedFile() file: Express.Multer.File){
+    uploadAvatar(
+        @Request() req: any, 
+        @UploadedFile() file: Express.Multer.File,
+        @Body('username') newUsername?: string
+    ){
 
         // mengambil id dari token jwt
         const userId = req.user.sub || req.user.id || req.user._id;
