@@ -12,4 +12,8 @@ export class CreateColumnDto {
     @IsOptional()
     @IsMongoId()
     groupId: string;
+
+    @IsOptional()
+    @IsString()
+    color?: string;
 }

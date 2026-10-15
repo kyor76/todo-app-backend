@@ -54,6 +54,7 @@ export class ColumnsController {
     @Request() req: any,
     @Body() body: UpdateColumnDto,
   ) {
+    const userId = req.user.id || req.user._id || req.user.sub;
     return this.columnsService.update(id, req.user.sub, body);
   }
 

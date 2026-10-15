@@ -32,9 +32,15 @@ export class ColumnsService {
   }
 
   async update(id: string, userId: string, updateData: any) {
-    return await this.columnModel
-      .findOneAndUpdate({ _id: id, userId: userId }, updateData, { new: true })
-      .exec();
+    const updateColumn = await this.columnModel.findOneAndUpdate({
+      _id: id,
+      userId: userId,}, 
+      updateData, { returnDocument: 'after' }
+    ).exec();
+    if (!updateColumn){
+      throw new NotFoundException('Kolom tidak ditemukan atau Anda tidak memiliki akses!');
+    }
+    return updateColumn;
   }
 
   async delete(id: string, userId: string) {

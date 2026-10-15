@@ -15,6 +15,9 @@ export class Column extends Document {
 
     @Prop({ type: Types.ObjectId, ref: 'Group', required: false })
     groupId: Types.ObjectId;
+
+    @Prop({ default: '#e2e8f0'})
+    color: string;
 }
 
 export const ColumnSchema = SchemaFactory.createForClass(Column);

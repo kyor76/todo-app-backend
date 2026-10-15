@@ -8,4 +8,8 @@ export class UpdateColumnDto {
     @IsNumber()
     @IsOptional()
     order?: number;
+
+    @IsOptional()
+    @IsString()
+    color?: string;
 }
