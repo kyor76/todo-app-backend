@@ -58,7 +58,7 @@ export class TodosService {
         return { message: 'Tugas berhasil dihapus' };
     }
 
-    // untuk menambahkan komentar ke dalam sebuah todo
+    // (GRUP) untuk menambahkan komentar ke dalam sebuah todo
     async addComment(todoId: string, userId: string, createCommentDto: CreateCommentDto){
         const todo = await this.todoModel.findById(todoId);
         if (!todo){
@@ -70,7 +70,7 @@ export class TodosService {
             todo.comments = [];
         }
 
-        // untuk masukkan komentar baru ke dalam array
+        // (GRUP) untuk masukkan komentar baru ke dalam array
         todo.comments.push({
             userId: new Types.ObjectId(userId),
             content: createCommentDto.content,

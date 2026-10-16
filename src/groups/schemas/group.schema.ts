@@ -15,6 +15,10 @@ export class Group extends Document{
     // daftar anggota grup
     @Prop({ type: [{type: Types.ObjectId, ref: 'User'}] })
     members: Types.ObjectId[];
+
+    // untuk batas maksimal jumlah anggota dalam grup
+    @Prop({ required: true })
+    maxMembers: number;
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);

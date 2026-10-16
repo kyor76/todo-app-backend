@@ -16,11 +16,12 @@ export class GroupsService {
     ){}
 
     // 1. buat fitur create grup
-    async createGroup(name: string, ownerId: string){
+    async createGroup(name: string, maxMembers: number, ownerId: string){
         const newGroup = new this.groupModel({
             name,
+            maxMembers,
             owner: new Types.ObjectId(ownerId),
-            member: [new Types.ObjectId(ownerId)],
+            members: [],
         });
         return await newGroup.save();
     }
@@ -120,10 +121,21 @@ export class GroupsService {
             group.members = [];
         }
 
+        // untuk hitung total member saat ini: owner (1) + jumlah member
+        const currentTotalMembers = 1 + group.members.length;
+        if (currentTotalMembers >= group.maxMembers){
+            throw new BadRequestException(`Gagal bergabung. Grup ini sudah mencapai batas maksimal anggotanya (${group.maxMembers} orang).`);
+        }
+
         // untuk mengecek apakah user sudah ada di grup, untuk mencegah duplikat
         const isAlreadyMember = group.members.some((memberId: any) => memberId.toString() === userId);
         if (isAlreadyMember){
             throw new BadRequestException('Anda sudah tergabung dalam grup ini.');
+        }
+
+        // untuk cegah owner join lagi
+        if (group.owner.toString()=== userId){
+            throw new BadRequestException('Anda adalah pembuat grup ini.');
         }
 
         // untuk menambahkan daftar anggota di grup dan menambah angka pengguna link
@@ -217,5 +229,33 @@ export class GroupsService {
         return {message: 'Grup beserta link undangannya berhasil dihapus secara permanen.'};
 
     }
+
+    // 10. fitur untuk update nama grup dan maksimal member
+    async updateGroup(groupId: string, newName: string, newMaxMembers: number, ownerId: string){
+        const group = await this.groupModel.findById(groupId) as any;
+        if (!group) throw new NotFoundException('Grup tidak ditemukan.');
+        if (group.owner.toString()!== ownerId){
+            throw new UnauthorizedException('Hanya pembuat grup yang bisa mengedit profil grup.');
+        }
+
+        // untuk validasi pengurangan batas maksimal members
+         if (newMaxMembers !== undefined && newMaxMembers !== null) {
+            const currentTotalMembers = 1 + (group.members ? group.members.length : 0);
+            
+            if (newMaxMembers < currentTotalMembers) {
+                 throw new BadRequestException(`Gagal memperbarui batas anggota. Jumlah anggota grup saat ini (${currentTotalMembers} orang) lebih besar dari batas baru (${newMaxMembers}). Silakan keluarkan beberapa anggota terlebih dahulu.`);
+            }
+            group.maxMembers = newMaxMembers;
+        }
+        // ------------------------------------------
+
+        if (newName && newName.trim() !== '') {
+            group.name = newName;
+        }
+
+        await group.save();
+        return group;
+    }
 }
+
 

@@ -11,9 +11,15 @@ export class GroupsController {
 
     // 1. endpoint untuk create grup
     @Post()
-    async createGroup(@Body('name') name: string, @Request() req: any){
+    async createGroup(
+      @Body('name') name: string, 
+      @Body('maxMembers')maxMembers: number , 
+      @Request() req: any){
+      if(!maxMembers){
+        throw new BadRequestException('Batas maksimal anggota (maxMembers) wajib diisi.');
+      }
         const ownerId = req.user.sub || req.user.id;
-        return this.groupsService.createGroup(name, ownerId);
+        return this.groupsService.createGroup(name,maxMembers, ownerId);
     }
 
     // 2. endpoint untuk update kuota anggota
@@ -97,5 +103,17 @@ export class GroupsController {
     ) {
       const ownerId = req.user.sub || req.user.id;
       return this.groupsService.deleteGroup(groupId, ownerId);
+    }
+
+    // 10. untuk endpoint edit profil/nama/max member grup (khusus owner)
+    @Patch(':groupId')
+    async updateGroup(
+      @Param('groupId') groupId: string,
+      @Body('name') newName: string,
+      @Body('maxMembers') newMaxMembers: number,
+      @Request() req: any
+    ){
+      const ownerId = req.user.sub || req.user.id;
+      return this.groupsService.updateGroup(groupId, newName, newMaxMembers, ownerId);
     }
 }
