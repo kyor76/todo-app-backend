@@ -140,6 +140,7 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
         message: 'Login berhasil!'
       };
     }
+    
   // 5. Fitur untuk Update Foto Profil
   async updateProfilePicture(userId: string, filename: string, newUsername?: string){
     const updateData: any = { profilePicture: filename };

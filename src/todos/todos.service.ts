@@ -5,6 +5,7 @@ import { Todo } from './todo.schema.js';
 import { CreateTodoDto } from './dto/create-todo.dto.js';
 import { CreateColumnDto } from '../columns/dto/create-column.dto.js';
 import { CreateCommentDto } from './dto/create-comment.dto.js';
+import { group } from 'console';
 
 @Injectable()
 export class TodosService {
@@ -77,5 +78,16 @@ export class TodosService {
         } as any);
 
         return await todo.save();
+    }
+
+    // untuk mengambil jadwal gabungan
+    async getCombinedSchedule(userId: string, groupIds: string[] ){
+        return await this.todoModel.find({
+            $or: [
+                { userId: userId, groupId: { $exists: false}},
+                { groupId: { $in: groupIds}},
+            ],
+        })
+        .populate('comments.userId', 'username email').exec();
     }
 }

@@ -8,18 +8,19 @@ import { CreateColumnDto } from './dto/create-column.dto.js';
 export class ColumnsService {
   constructor(@InjectModel(Column.name) private columnModel: Model<Column>) {}
 
-  // Ubah parameter menjadi menerima DTO dan userId
+  // Membuat kolom baru untuk pengguna (personal) atau grup
   async create(createColumnDto: CreateColumnDto, userId: string) {
     const { name, order, groupId } = createColumnDto;
     const newColumn = new this.columnModel({
       name,
-      userId, // Pastikan userId ini tidak undefined
+      userId, 
       order: order || 0,
       groupId,
     });
     return await newColumn.save();
   }
 
+  // Mengambil daftar kolom personal pengguna (tidak terikat grup) dan diurutkan
   async findAll(userId: string) {
     return await this.columnModel.find({ 
       userId: userId,
@@ -27,10 +28,12 @@ export class ColumnsService {
     }).sort({ order: 1 }).exec();
   }
 
+  // Mengambil daftar kolom khusus untuk sebuah grup dan diurutkan
   async getColumnsByGroup(groupId: string){
     return this.columnModel.find({ groupId }).sort ({ order: 1 }).exec();
   }
 
+  // Memperbarui informasi kolom (seperti mengganti nama)
   async update(id: string, userId: string, updateData: any) {
     const updateColumn = await this.columnModel.findOneAndUpdate({
       _id: id,
@@ -43,12 +46,14 @@ export class ColumnsService {
     return updateColumn;
   }
 
+  // Menghapus kolom secara permanen dari database
   async delete(id: string, userId: string) {
     return await this.columnModel
       .findOneAndDelete({ _id: id, userId: userId })
       .exec();
   }
 
+  // Memperbarui posisi urutan (order) kolom pada papan Kanban
   async updateOrder(id: string, order: number) {
     const updatedColumn = await this.columnModel
       .findByIdAndUpdate(id, { order }, { new: true })

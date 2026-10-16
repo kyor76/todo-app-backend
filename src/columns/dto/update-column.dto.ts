@@ -1,15 +1,18 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateColumnDto {
-    @IsString()
-    @IsOptional()
-    name?: string;
+  // Nama kolom baru jika pengguna ingin mengubah namanya
+  @IsString()
+  @IsOptional()
+  name?: string;
 
-    @IsNumber()
-    @IsOptional()
-    order?: number;
+  // Perubahan posisi atau urutan kolom pada papan Kanban
+  @IsNumber()
+  @IsOptional()
+  order?: number;
 
-    @IsOptional()
-    @IsString()
-    color?: string;
+  // Perubahan kode warna untuk kustomisasi tampilan kolom
+  @IsString()
+  @IsOptional()
+  color?: string;
 }

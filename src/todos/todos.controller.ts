@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { TodosService } from './todos.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { CreateTodoDto } from './dto/create-todo.dto.js';
@@ -17,6 +17,14 @@ export class TodosController {
         // req.user.sub berisi ID User yang diambil dari Token JWT
         const userId = req.user.id || req.user._id || req.user.sub;
         return this.todosService.create(userId, body);
+    }
+
+    // endpoint jadwal gabungan
+    @Get('schedule/combined')
+    async getCombinedSchedule(@Request() req: any, @Query('groupIds') groupIdsStr: string){
+        const userId = req.user.sub || req.user.id;
+        const groupIds = groupIdsStr? groupIdsStr.split(','): [];
+        return this.todosService.getCombinedSchedule(userId, groupIds);
     }
 
     // 2. READ untuk menerima request GET untuk menampilkan semua tugas

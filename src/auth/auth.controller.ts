@@ -10,12 +10,14 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
+    // Mendaftarkan pengguna baru
     @Post('register')
     async register(@Body() registerDto: RegisterDto) {
 
         return this.authService.register(registerDto);
     }
 
+    // Proses login pengguna dan pengembalian token JWT
     @Post('login')
   async login(@Body() body: any) {
     if (!body.email || !body.password) {
@@ -24,6 +26,7 @@ export class AuthController {
     return this.authService.login(body.email, body.password);
   }
 
+    // Meminta tautan atau token reset password ke email
     @Post('reset-password')
     async resetPassword(@Body('email') email: string){
         if (!email){
@@ -32,6 +35,7 @@ export class AuthController {
         return this.authService.resetPassword(email);
     }
 
+    // Mengonfirmasi dan mengubah password menggunakan token
     @Post('confirm-reset')
     async confirmResetPassword(@Body() body: { token: string; newPassword: string }) {
         if (!body.token || !body.newPassword) {
@@ -40,6 +44,7 @@ export class AuthController {
         return this.authService.confirmResetPassword(body.token, body.newPassword);
     }
 
+    // Mengunggah dan memperbarui foto profil (avatar) pengguna
     @UseGuards(JwtAuthGuard)
     @Post('profile/upload')
     @UseInterceptors(FileInterceptor('file',{
