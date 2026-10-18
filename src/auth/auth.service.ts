@@ -8,8 +8,6 @@ import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from '../columns/dto/register.dto.js';
 import { ConfigService } from '@nestjs/config';
-import { PassThrough } from 'stream';
-import { from } from 'rxjs';
 
 
 @Injectable()
@@ -117,72 +115,80 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
   }
 
 
-  // 4. fitur untuk login
+  // Login mengembalikan URL foto yang dinamis dari .env
   async login(email: string, pass: string) {
-      // untuk Cari user berdasarkan email
       const user = await this.userModel.findOne({ email });
-      
-      // untuk Proteksi jika user tidak ditemukan (Ini yang mencegah error 'undefined' tadi!)
-      if (!user) {
-        throw new UnauthorizedException('Email tidak terdaftar!');
-      }
+      if (!user) { throw new UnauthorizedException('Email tidak terdaftar!'); }
 
-      // untuk Cek kecocokan password
       const isMatch = await bcrypt.compare(pass, user.password);
-      if (!isMatch) {
-        throw new UnauthorizedException('Password salah!');
-      }
+      if (!isMatch) { throw new UnauthorizedException('Password salah!'); }
 
-      // untuk Buat JWT Token jika semua aman
+      // Ambil API_URL dari env (fallback ke localhost jika tidak ada)
+      const apiUrl = this.configService.get<string>('API_URL') || 'http://localhost:3000';
+
       const payload = { username: user.username, sub: user._id };
       return {
+        message: 'Login berhasil!',
         access_token: this.jwtService.sign(payload),
-        message: 'Login berhasil!'
+        username: user.username,
+        profilePicture: user.profilePicture ? `${apiUrl}/uploads/profiles/${user.profilePicture}` : '',
       };
     }
     
-  // 5. Fitur untuk Update Foto Profil
-  async updateProfilePicture(userId: string, filename: string, newUsername?: string){
-    const updateData: any = { profilePicture: filename };
-    if (newUsername){
-      updateData.username = newUsername;
-    }
-
+  // Fungsi untuk update foto, URL dinamis.
+  async updateProfilePicture(userId: string, filename: string){
     const updateUser = await this.userModel.findByIdAndUpdate(
       userId,
-      updateData,
-      {returnDocument: 'after'}
+      { profilePicture: filename },
+      { returnDocument: 'after' }
     ).exec();
 
     if (!updateUser){
       throw new UnauthorizedException('User tidak ditemukan');
     }
 
+    const apiUrl = this.configService.get<string>('API_URL') || 'http://localhost:3000';
+
     return {
       message: 'Foto profil berhasil diperbarui!',
       profilePicture: updateUser.profilePicture,
-      username: updateUser.username,
-
-      // URL yang dipakai di tag <img> frontend
-      url: `http://localhost:3000/uploads/profiles/${filename}`
-
+      url: `${apiUrl}/uploads/profiles/${filename}`
     };
   }
 
-  // 6. Fungsi Pengiriman Email Link Reset Password
+  // fungsi untuk update username 
+  async updateProfile(userId: string, newUsername: string) {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      { username: newUsername },
+      { returnDocument: 'after' },
+    ).exec();
+
+    if (!updatedUser) {
+      throw new UnauthorizedException('User tidak ditemukan');
+    }
+
+    return {
+      message: 'Profil berhasil diperbarui!',
+      username: updatedUser.username,
+    };
+  }
+
+  // Link Reset Password di email menggunakan variabel FRONTEND_URL
   private async sendResetEmailLink(to: string, username: string, resetToken: string) {
     try {
       const emailUser = this.configService.get<string>('EMAIL_USER');
       const emailPass = this.configService.get<string>('EMAIL_PASS');
 
+      // Ambil URL Frontend dari env. Jika belum diset, fallback ke localhost.
+      // Nanti frontend web (React/Angular) bisa menangkap token ini. Mobile (Flutter) juga bisa lewat Deep Link.
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+      
       const transporter = nodemailer.createTransport({
         service: 'gmail',
-        auth: {
-          user: emailUser,
-          pass: emailPass,
-        },
+        auth: { user: emailUser, pass: emailPass },
       });
-      const resetLink = `http://localhost:3000/auth/confirm-reset?token=${resetToken}`;
+      const resetLink = `${frontendUrl}/auth/confirm-reset?token=${resetToken}`;
 
       const mailOptions = {
         from: `"Admin Kanban" <${emailUser}>`,
@@ -191,18 +197,16 @@ private async sendWelcomeEmail(to: string, username: string, password:string) {
         html: `
           <div style="font-family: sans-serif; padding: 20px;">
             <h2>Halo, ${username}!</h2>
-            <p>Kami menerima permintaan untuk melakukan reset password pada akun Kanban To-Do Anda.</p>
-            <p>Silakan klik link atau salin URL di bawah ini untuk membuat password baru. Link ini hanya berlaku selama <strong>1 jam</strong>.</p>
+            <p>Silakan klik link di bawah ini untuk membuat password baru. Link berlaku <strong>1 jam</strong>.</p>
             <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; word-wrap: break-word;">
               <a href="${resetLink}" style="color: #007bff; font-weight: bold; text-decoration: none;">${resetLink}</a>
             </div>
-            <p>Jika Anda tidak pernah meminta reset password, abaikan email ini dan akun Anda akan tetap aman.</p>
+            <p>Jika Anda tidak pernah meminta reset password, abaikan email ini.</p>
           </div>
         `,
       };
 
       await transporter.sendMail(mailOptions);
-      console.log(`Email Link Reset Password berhasil dikirim ke ${to}`);
     } catch (error) {
       console.error('Gagal mengirim email link reset password:', error);
     }
