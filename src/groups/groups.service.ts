@@ -92,13 +92,13 @@ export class GroupsService {
         return{ message:'Link undangan berhasil dinonaktifkan (dicabut paksa).' };
     }
 
-    // 5. untuk fitur Bergabung ke grup dengan token
+    // 5. fitur untuk Bergabung ke grup dengan token
     async joinGroupByToken(token: string, userId: string){
 
         // mencari undangan berdasarkan token
         const invitation = await this.invitationModel.findOne({token});
         if (!invitation){
-            throw new NotFoundException('Link undangan tidak falid atau tidak ditemukan.');
+            throw new NotFoundException('Link undangan tidak valid atau tidak ditemukan.');
         }
 
         // untuk cek status aktif, kadaluarsa, dan kuota
@@ -121,14 +121,16 @@ export class GroupsService {
             group.members = [];
         }
 
-        // untuk hitung total member saat ini: owner (1) + jumlah member
-        const currentTotalMembers = 1 + group.members.length;
+        // untuk mencagah anggota masuk jika jumlah anggota sudah maxMembers
+        const currentTotalMembers = group.members.length + 1;
         if (currentTotalMembers >= group.maxMembers){
-            throw new BadRequestException(`Gagal bergabung. Grup ini sudah mencapai batas maksimal anggotanya (${group.maxMembers} orang).`);
+            throw new BadRequestException('Grup sudah mencapai batas maksimal anggota.');
         }
 
         // untuk mengecek apakah user sudah ada di grup, untuk mencegah duplikat
-        const isAlreadyMember = group.members.some((memberId: any) => memberId.toString() === userId);
+        const isAlreadyMember = group.members.some(
+            (memberId: any) => memberId.toString() === userId
+        );
         if (isAlreadyMember){
             throw new BadRequestException('Anda sudah tergabung dalam grup ini.');
         }
