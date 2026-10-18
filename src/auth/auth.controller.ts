@@ -56,12 +56,28 @@ export class AuthController {
                 const ext = extname(file.originalname);
                 cb(null, `avatar-${userId}-${uniqueSuffix}${ext}`);
             }
-        })
+        }),
+        // Membatasi ukuran file maksimal 2 MB
+        limits: {
+            fileSize: 2 * 1024 * 1024, 
+        },
+        // Memfilter hanya file berekstensi/mimetype gambar yang diizinkan masuk
+        fileFilter: (req: any, file, cb) => {
+            if (file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
+                cb(null, true); // File diizinkan
+            } else {
+                cb(new BadRequestException('Format file ditolak! Hanya izinkan JPG/PNG.'), false); // File ditolak
+            }
+        }
     }))
     uploadAvatar(
         @Request() req: any, 
         @UploadedFile() file: Express.Multer.File,
     ){
+        // Validasi kalau user menekan 'Send' tanpa memasukkan file sama sekali
+        if (!file) {
+            throw new BadRequestException('File gambar tidak ditemukan!');
+        }
         const userId = req.user.sub || req.user.id || req.user._id;
         return this.authService.updateProfilePicture(userId, file.filename);
     }
