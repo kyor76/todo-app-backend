@@ -14,14 +14,14 @@ export class TodosService {
 
     // 1. CREATE untuk menambahkan tugas baru + userId pemiliknya
     async create(userId: string, createTodoDto: CreateTodoDto) {
-  const newTodo = new this.todoModel({
-    ...createTodoDto,
-    userId: userId,
-  });
-  return await newTodo.save();
+        const newTodo = new this.todoModel({
+            ...createTodoDto,
+            userId: userId,
+        });
+        return await newTodo.save();
 }
 
-    // 2  Ambil Todo PERSONAL login
+    // 2. Ambil Todo PERSONAL login
     async findAll(userId: string){
         return this.todoModel.find({ 
             userId: userId,
@@ -34,7 +34,7 @@ export class TodosService {
     return this.todoModel.find({ groupId }).exec();
     }
 
-    // 3, UPDATE Memperbarui data Kanban (misal: geser kartu dari 'To Do' ke 'In Progress')
+    // 3. UPDATE data Kanban
     async update(id:string, userId: string, updateData: any): Promise<Todo> {
         const updatedTodo = await this.todoModel.findByIdAndUpdate(
             {_id: id, userId: userId },
@@ -59,7 +59,7 @@ export class TodosService {
         return { message: 'Tugas berhasil dihapus' };
     }
 
-    // (GRUP) untuk menambahkan komentar ke dalam sebuah todo
+    // 5. (GRUP) untuk menambahkan komentar ke dalam sebuah todo
     async addComment(todoId: string, userId: string, createCommentDto: CreateCommentDto){
         const todo = await this.todoModel.findById(todoId);
         if (!todo){
@@ -80,7 +80,7 @@ export class TodosService {
         return await todo.save();
     }
 
-    // untuk mengambil jadwal gabungan
+    // 6. untuk mengambil jadwal gabungan
     async getCombinedSchedule(userId: string, groupIds: string[] ){
         return await this.todoModel.find({
             $or: [

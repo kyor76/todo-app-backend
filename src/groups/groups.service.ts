@@ -61,7 +61,7 @@ export class GroupsService {
         };
     }
 
-    // 3. fitur untuk edit batas jumlah user (maxUses)
+    // 3. fitur untuk edit batas jumlah penggunaan link (maxUses)
     async updateMaxUses(invitationId: string, ownerId: string, newMaxUses: number){
         const invitation = await this.invitationModel.findById(invitationId).populate('groupId');
         if (!invitation) throw new NotFoundException ('Undangan tidak ditemukan');

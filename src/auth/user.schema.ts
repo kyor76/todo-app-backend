@@ -15,6 +15,9 @@ export class User extends Document {
     @Prop({ default: null })
     profilePicture: string;
 
+    @Prop({ default: true })
+    isUsingTemporaryPassword: boolean;
+
     @Prop()
     resetPasswordToken?: string;
 

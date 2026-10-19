@@ -8,7 +8,7 @@ import { CreateColumnDto } from './dto/create-column.dto.js';
 export class ColumnsService {
   constructor(@InjectModel(Column.name) private columnModel: Model<Column>) {}
 
-  // Membuat kolom baru untuk pengguna (personal) atau grup
+  // 1. Membuat kolom baru untuk pengguna (personal) atau grup
   async create(createColumnDto: CreateColumnDto, userId: string) {
     const { name, order, groupId } = createColumnDto;
     const newColumn = new this.columnModel({
@@ -20,7 +20,7 @@ export class ColumnsService {
     return await newColumn.save();
   }
 
-  // Mengambil daftar kolom personal pengguna (tidak terikat grup) dan diurutkan
+  // 2. Mengambil daftar kolom personal pengguna (tidak terikat grup) dan diurutkan
   async findAll(userId: string) {
     return await this.columnModel.find({ 
       userId: userId,
@@ -33,7 +33,7 @@ export class ColumnsService {
     return this.columnModel.find({ groupId }).sort ({ order: 1 }).exec();
   }
 
-  // Memperbarui informasi kolom (seperti mengganti nama)
+  // 3. Memperbarui informasi kolom (seperti mengganti nama)
   async update(id: string, userId: string, updateData: any) {
     const updateColumn = await this.columnModel.findOneAndUpdate({
       _id: id,
@@ -46,14 +46,14 @@ export class ColumnsService {
     return updateColumn;
   }
 
-  // Menghapus kolom secara permanen dari database
+  // 4. Menghapus kolom secara permanen dari database
   async delete(id: string, userId: string) {
     return await this.columnModel
       .findOneAndDelete({ _id: id, userId: userId })
       .exec();
   }
 
-  // Memperbarui posisi urutan (order) kolom pada papan Kanban
+  // 5. Memperbarui posisi urutan (drag n drop) kolom pada papan Kanban
   async updateOrder(id: string, order: number) {
     const updatedColumn = await this.columnModel
       .findByIdAndUpdate(id, { order }, { new: true })
