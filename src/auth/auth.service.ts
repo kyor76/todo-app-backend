@@ -209,7 +209,7 @@ export class AuthService {
             <h2>Halo, ${username}!</h2>
             <p>Silakan klik link di bawah ini untuk membuat password baru. Link berlaku <strong>1 jam</strong>.</p>
             <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; word-wrap: break-word;">
-              <a href="${resetLink}" style="color: #007bff; font-weight: bold; text-decoration: none;">${resetLink}</a>
+              <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Ubah Password Sekarang</a>
             </div>
             <p>Jika Anda tidak pernah meminta reset password, abaikan email ini.</p>
           </div>

@@ -19,7 +19,7 @@ export class TodosService {
             userId: userId,
         });
         return await newTodo.save();
-}
+    }
 
     // 2. Ambil Todo PERSONAL login
     async findAll(userId: string){
