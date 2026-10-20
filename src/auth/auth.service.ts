@@ -262,9 +262,11 @@ export class AuthService {
     }
 
     // Validasi regex password
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(newPassword)){
-      throw new BadRequestException( 'Password minimal 8 karakter dan harus mengandung setidaknya satu huruf besar, satu huruf kecil, satu angka, dan satu karakter spesial (@$!%*?&).' );
+    const passwordRegex = /^(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      throw new BadRequestException(
+        'Password minimal 8 karakter dan harus mengandung setidaknya satu angka dan satu karakter spesial (@$!%*?&).'
+      );
     }
 
     // Hash password baru yang dikirimkan user
