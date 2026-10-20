@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema.js';
@@ -259,6 +259,12 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Token reset password tidak valid atau sudah kedaluwarsa!');
+    }
+
+    // Validasi regex password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(newPassword)){
+      throw new BadRequestException( 'Password minimal 8 karakter dan harus mengandung setidaknya satu huruf besar, satu huruf kecil, satu angka, dan satu karakter spesial (@$!%*?&).' );
     }
 
     // Hash password baru yang dikirimkan user
