@@ -68,10 +68,14 @@ export class GroupsService {
 
         const group = invitation.groupId as any;
         if (group.owner.toString() !== ownerId){
-            throw new BadRequestException(`Tidak bisa mengubah kuota menjadi ${newMaxUses}, karena sudah ada ${invitation.currentUses} orang yang bergabung.`);
-
+            throw new UnauthorizedException('Hanya pembuat grup yang dapat mengedit batas penggunaan link ini.');
         }
 
+        const currentUses = invitation.currentUses || 0;
+        if (newMaxUses < currentUses){
+            throw new BadRequestException(`Tidak bisa mengubah batas kuota menjadi ${newMaxUses}, karena sudah ada ${currentUses} orang yang bergabung menggunakan link ini.`);
+        }
+        
         invitation.maxUses = newMaxUses;
         await invitation.save();
         return { Message:`Batas maksimal anggota berhasil diubah menjadi ${newMaxUses}`};
