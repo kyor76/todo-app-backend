@@ -179,10 +179,6 @@ export class GroupsService {
 
         // untuk hapus user dari array members
         group.members = group.members.filter((id: any) => id.toString() !== userId);
-        
-        if (group.member){
-            group.member = group.member.filter((id: any) => id.toString() !== userId);
-        }
 
         await group.save();
             return {message: ' Berhasil keluar dari grup.'};
@@ -207,10 +203,7 @@ export class GroupsService {
         if (group.members){
             group.members = group.members.filter((id: any) => id.toString() !== memberId);
         }
-        if (group.member){
-            group.member = group.member.filter((id: any) => id.toString() !== memberId);
-        }
-
+        
         await group.save();
         return {message: 'Anggota berhasil dikeluarkan dari grup.'};
     }
