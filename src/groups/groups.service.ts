@@ -75,7 +75,7 @@ export class GroupsService {
         if (newMaxUses < currentUses){
             throw new BadRequestException(`Tidak bisa mengubah batas kuota menjadi ${newMaxUses}, karena sudah ada ${currentUses} orang yang bergabung menggunakan link ini.`);
         }
-        
+
         invitation.maxUses = newMaxUses;
         await invitation.save();
         return { Message:`Batas maksimal anggota berhasil diubah menjadi ${newMaxUses}`};
@@ -104,16 +104,15 @@ export class GroupsService {
         if (!invitation){
             throw new NotFoundException('Link undangan tidak valid atau tidak ditemukan.');
         }
-
         // untuk cek status aktif, kadaluarsa, dan kuota
         if (invitation.isRevoked){
-            throw new BadGatewayException('Link undangan ini sudah dinonaktifkan oleh pembuat grup.');
+            throw new BadRequestException('Link undangan ini sudah dinonaktifkan oleh pembuat grup.');
         }
         if (invitation.expireAt < new Date()){
-            throw new BadGatewayException('Masa berlaku link undangan sudah habis.');
+            throw new BadRequestException('Masa berlaku link undangan sudah habis.');
         }
         if (invitation.currentUses >= invitation.maxUses){
-            throw new BadGatewayException('Kuota grup sudah penuh.');
+            throw new BadRequestException('Kuota grup sudah penuh.');
         }
 
         // untuk mencari grup yang terkait dengan undangan ini
@@ -163,7 +162,6 @@ export class GroupsService {
       return await this.groupModel.find({
         $or: [
           {owner: new Types.ObjectId(userId)},
-          {member: new Types.ObjectId(userId)},
           {members: new Types.ObjectId(userId)}
         ]
       }).exec();
