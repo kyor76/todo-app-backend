@@ -203,7 +203,6 @@ export class GroupsService {
         if (group.members){
             group.members = group.members.filter((id: any) => id.toString() !== memberId);
         }
-        
         await group.save();
         return {message: 'Anggota berhasil dikeluarkan dari grup.'};
     }
