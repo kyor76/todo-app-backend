@@ -253,5 +253,3 @@ export class GroupsService {
         return group;
     }
 }
-
-
