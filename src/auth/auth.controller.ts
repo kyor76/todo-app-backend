@@ -5,6 +5,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { LoginDto } from './dto/login.dto.js';
+import { ConfirmResetDto } from './dto/confirm-reset.dto.js';
 
 @Controller('auth')
 export class AuthController {
