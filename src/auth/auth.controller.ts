@@ -36,8 +36,8 @@ export class AuthController {
 
     // Mengonfirmasi dan mengubah password menggunakan token
     @Post('confirm-reset')
-    async confirmResetPassword(@Body() body: { token: string; newPassword: string }) {
-        return this.authService.confirmResetPassword(body.token, body.newPassword);
+    async confirmResetPassword(@Body() confirmResetPassword: ConfirmResetDto) {
+        return this.authService.confirmResetPassword(confirmResetPassword.token, confirmResetPassword.newPassword);
     }
 
     // Rute untuk upload foto profil
