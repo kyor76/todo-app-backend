@@ -1,6 +1,6 @@
 import { Controller, Post, Put, Body, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
-import { RegisterDto } from '../columns/dto/register.dto.js';
+import { RegisterDto } from './dto/register.dto.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -20,9 +20,6 @@ export class AuthController {
     // Proses login pengguna dan pengembalian token JWT
     @Post('login')
   async login(@Body() body: any) {
-    if (!body.email || !body.password) {
-      throw new BadRequestException('Email dan password tidak boleh kosong!');
-    }
     return this.authService.login(body.email, body.password);
   }
 
@@ -38,9 +35,6 @@ export class AuthController {
     // Mengonfirmasi dan mengubah password menggunakan token
     @Post('confirm-reset')
     async confirmResetPassword(@Body() body: { token: string; newPassword: string }) {
-        if (!body.token || !body.newPassword) {
-        throw new BadRequestException('Token dan Password Baru tidak boleh kosong!');
-        }
         return this.authService.confirmResetPassword(body.token, body.newPassword);
     }
 

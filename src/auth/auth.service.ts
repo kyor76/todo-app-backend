@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from '../columns/dto/register.dto.js';
+import { RegisterDto } from './dto/register.dto.js';
 import { ConfigService } from '@nestjs/config';
 
 
@@ -260,18 +260,8 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Token reset password tidak valid atau sudah kedaluwarsa!');
     }
-
-    // Validasi regex password
-    const passwordRegex = /^(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]{8,}$/;
-    if (!passwordRegex.test(newPassword)) {
-      throw new BadRequestException(
-        'Password minimal 8 karakter dan harus mengandung setidaknya satu angka dan satu karakter spesial (@$!%*?&).'
-      );
-    }
-
     // Hash password baru yang dikirimkan user
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     // Update password, dan HAPUS token agar tidak bisa dipakai 2 kali
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
