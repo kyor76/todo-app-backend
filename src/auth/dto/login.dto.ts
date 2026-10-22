@@ -1,7 +1,7 @@
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 
 
-export class LoginDto {
+export class loginDto {
 
     @IsEmail({}, { message: 'Format email tidak falid!' })
     @IsNotEmpty({ message: 'Emalin tidak boleh kosong'})

@@ -5,7 +5,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
-import { LoginDto } from './dto/login.dto.js';
+import { loginDto } from './dto/login.dto.js';
 import { ConfirmResetDto } from './dto/confirm-reset.dto.js';
 
 @Controller('auth')
@@ -21,8 +21,8 @@ export class AuthController {
 
     // Proses login pengguna dan pengembalian token JWT
     @Post('login')
-  async login(@Body() body: any) {
-    return this.authService.login(body.email, body.password);
+    async login(@Body() loginDto: loginDto) {
+    return this.authService.login(loginDto.email, loginDto.password);
   }
 
     // Meminta tautan atau token reset password ke email
