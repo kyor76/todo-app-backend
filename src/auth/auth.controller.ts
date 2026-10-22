@@ -5,7 +5,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
-import { loginDto } from './dto/login.dto.js';
+import { LoginDto } from './dto/login.dto.js';
 import { ConfirmResetDto } from './dto/confirm-reset.dto.js';
 
 @Controller('auth')
@@ -21,7 +21,7 @@ export class AuthController {
 
     // Proses login pengguna dan pengembalian token JWT
     @Post('login')
-    async login(@Body() loginDto: loginDto) {
+    async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto.email, loginDto.password);
   }
 
