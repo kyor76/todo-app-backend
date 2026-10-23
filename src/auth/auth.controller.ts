@@ -31,7 +31,15 @@ export class AuthController {
 
     // Meminta tautan atau token reset password ke email
     @ApiOperation({ summary: 'Meminta tautan token reset password ke email' })
-    @ApiBody({schema: { type: 'object', properties: { email: { type: 'string', example: 'user@email.com' } } }})
+    @ApiBody({
+        schema: { 
+            type: 'object', 
+            properties: { 
+                email: { type: 'string', example: 'user@email.com' } 
+            },
+            required: ['email'] 
+        }
+    })
     @Post('reset-password')
     async resetPassword(@Body('email') email: string){
         if (!email){
@@ -43,8 +51,8 @@ export class AuthController {
     // Mengonfirmasi dan mengubah password menggunakan token
     @ApiOperation({summary: 'Mengonfirmasi dan mengubah password menggunakan token'})
     @Post('confirm-reset')
-    async confirmResetPassword(@Body() ConfirmResetDto: ConfirmResetDto) {
-        return this.authService.confirmResetPassword(ConfirmResetDto.token, ConfirmResetDto.newPassword);
+    async confirmResetPassword(@Body() confirmResetDto: ConfirmResetDto) {
+        return this.authService.confirmResetPassword(confirmResetDto.token, confirmResetDto.newPassword);
     }
 
     // Rute untuk upload foto profil
@@ -91,8 +99,16 @@ export class AuthController {
 
     // Rute PUT khusus untuk update teks profil username
     @ApiBearerAuth()
-    @ApiOperation({summary: 'Mengubah username profil'})
-    @ApiBody({schema: { type: 'object', properties: { username: { type: 'string', example: 'RikoBaru' } } }})
+    @ApiOperation({ summary: 'Mengubah username profil' })
+    @ApiBody({
+        schema: { 
+            type: 'object', 
+            properties: { 
+                username: { type: 'string', example: 'RikoBaru' } 
+            },
+            required: ['username'] // <-- Wajib diubah menjadi username
+        }
+    })
     @UseGuards(JwtAuthGuard)
     @Put('profile')
     async updateProfile(
