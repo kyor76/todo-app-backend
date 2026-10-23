@@ -1,7 +1,10 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString, Matches } from "class-validator";
 
 
 export class ConfirmResetDto {
+
+    @ApiProperty({ example: 'd913dde2777f1c34e25453f59243cdc0289a723dd4645efd6f0ffa72936efbc1', description: 'Token yang dibuat sistem' })
     @IsNotEmpty({ message: 'Token tidak boleh kosong'})
     @IsString()
     token: string;

@@ -164,7 +164,10 @@ export class GroupsService {
           {owner: new Types.ObjectId(userId)},
           {members: new Types.ObjectId(userId)}
         ]
-      }).exec();
+      })
+      .populate('owner', '_id username')
+      .populate('members', '_id username')
+      .exec();
     }
 
     // 7. fitur untuk keluar dari grup

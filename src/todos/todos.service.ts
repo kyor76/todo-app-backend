@@ -31,7 +31,9 @@ export class TodosService {
 
     // ambil todo grup
     async getTodosByGroup(groupId: string) {
-    return this.todoModel.find({ groupId }).exec();
+    return this.todoModel.find({ groupId })
+    .populate('comments.userId', '_id username')
+    .exec();
     }
 
     // 3. UPDATE data Kanban
@@ -77,7 +79,9 @@ export class TodosService {
             content: createCommentDto.content,
         } as any);
 
-        return await todo.save();
+        await todo.save()
+
+        return await todo.populate('comments.userId', '_id username');
     }
 
     // 6. untuk mengambil jadwal gabungan

@@ -128,7 +128,7 @@ export class AuthService {
   }
 
 
-  // 4. Login mengembalikan URL foto yang dinamis dari .env
+  // 4. Login 
   async login(email: string, pass: string) {
       const user = await this.userModel.findOne({ email });
       if (!user) { throw new UnauthorizedException('Email tidak terdaftar!'); }
