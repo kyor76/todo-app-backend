@@ -25,8 +25,6 @@ export class CreateColumnDto {
     // Kode warna untuk kustomisasi tampilan kolom di frontend (UI)
     @ApiPropertyOptional({ example: '#a0a0a0', description: 'Kode warna hex untuk kustom UI'})
     @IsOptional()
-    @IsMongoId()
-    @IsOptional()
     @IsString()
     color?: string;
 }

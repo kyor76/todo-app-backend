@@ -23,7 +23,7 @@ export class UpdateTodoDto {
     @IsOptional()
     dueDate?: Date;
 
-    @ApiPropertyOptional({ example: 9-12-2026, description: 'Tenggat waktu tugas yang dikerjakan' })
+    @ApiPropertyOptional({ example: '6ad847e1595b950be6d116f9', description: 'ID kolom baru jika tugas dipindahkan' })
     @IsString()
     @IsOptional()
     columnId?: string;

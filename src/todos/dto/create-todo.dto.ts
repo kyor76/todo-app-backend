@@ -34,7 +34,7 @@ export class CreateTodoDto {
     columnId: string;
 
     // ID Grup jika tugas ini merupakan tugas kolaborasi
-    @ApiPropertyOptional({  })
+    @ApiPropertyOptional({ example: '6ad847e1595b950be6d116f8', description: 'ID Grup jika tugas ini merupakan tugas kolaborasi' })
     @IsOptional()
     @IsMongoId()
     groupId?: string;
