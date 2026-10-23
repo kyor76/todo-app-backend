@@ -7,12 +7,15 @@ import { extname } from 'path';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ConfirmResetDto } from './dto/confirm-reset.dto.js';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     // Mendaftarkan pengguna baru
+    @ApiOperation({ summary: 'Mendaftarkan pengguna baru' })
     @Post('register')
     async register(@Body() registerDto: RegisterDto) {
 
@@ -20,12 +23,15 @@ export class AuthController {
     }
 
     // Proses login pengguna dan pengembalian token JWT
+    @ApiOperation({ summary: 'Proses login pengguna dan mendapatkan token' })
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto.email, loginDto.password);
   }
 
     // Meminta tautan atau token reset password ke email
+    @ApiOperation({ summary: 'Meminta tautan token reset password ke email' })
+    @ApiBody({schema: { type: 'object', properties: { email: { type: 'string', example: 'user@email.com' } } }})
     @Post('reset-password')
     async resetPassword(@Body('email') email: string){
         if (!email){
@@ -35,12 +41,17 @@ export class AuthController {
     }
 
     // Mengonfirmasi dan mengubah password menggunakan token
+    @ApiOperation({summary: 'Mengonfirmasi dan mengubah password menggunakan token'})
     @Post('confirm-reset')
     async confirmResetPassword(@Body() ConfirmResetDto: ConfirmResetDto) {
         return this.authService.confirmResetPassword(ConfirmResetDto.token, ConfirmResetDto.newPassword);
     }
 
     // Rute untuk upload foto profil
+    @ApiBearerAuth()
+    @ApiOperation({summary: 'Upload foto profil (Maks 2MB, JPG/PNG)'})
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } }})
     @UseGuards(JwtAuthGuard)
     @Post('profile/upload')
     @UseInterceptors(FileInterceptor('file',{
@@ -79,6 +90,9 @@ export class AuthController {
     }
 
     // Rute PUT khusus untuk update teks profil username
+    @ApiBearerAuth()
+    @ApiOperation({summary: 'Mengubah username profil'})
+    @ApiBody({schema: { type: 'object', properties: { username: { type: 'string', example: 'RikoBaru' } } }})
     @UseGuards(JwtAuthGuard)
     @Put('profile')
     async updateProfile(

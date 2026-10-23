@@ -3,7 +3,10 @@ import { TodosService } from './todos.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { CreateTodoDto } from './dto/create-todo.dto.js';
 import { CreateCommentDto } from './dto/create-comment.dto.js';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Todos')
+@ApiBearerAuth()
 @Controller('todos')
 @UseGuards(JwtAuthGuard)
 export class TodosController {
@@ -12,6 +15,7 @@ export class TodosController {
     constructor(private readonly todosService: TodosService) {}
 
     // 1. CREATE untuk menerima request POST untuk menambahkan tugas baru
+    @ApiOperation({summary: 'Menambahkan tugas baru ke dalam kolom'})
     @Post()
     create(@Request() req: any, @Body() body: CreateTodoDto) {
         // req.user.sub berisi ID User yang diambil dari Token JWT
@@ -20,6 +24,8 @@ export class TodosController {
     }
 
     // endpoint jadwal gabungan
+    @ApiOperation({summary: 'Mengambil jadwal gabungan personal dan grup'})
+    @ApiQuery({name: 'groupIds', required: false, type: String, description: 'ID Grup dipisahkan koma (contoh: id1,id2)'})
     @Get('schedule/combined')
     async getCombinedSchedule(@Request() req: any, @Query('groupIds') groupIdsStr: string){
         const userId = req.user.sub || req.user.id;
@@ -28,6 +34,7 @@ export class TodosController {
     }
 
     // 2. READ untuk menerima request GET untuk menampilkan semua tugas
+    @ApiOperation({summary: 'Menampilkan semua tugas personal'})
     @Get()
     findAll(@Request() req: any) {
         const userId = req.user.id || req.user._id || req.user.sub;
@@ -35,6 +42,7 @@ export class TodosController {
     } 
 
     // 3. UPDATE untuk menerima request PATCH untuk mengubah status tugas
+    @ApiOperation({summary: 'Mengubah data/status tugas'})
     @Patch(':id')
     update (
         @Param('id') id: string,
@@ -46,17 +54,20 @@ export class TodosController {
     }
 
     // 4. DELETE untuk menerima request DELETE untuk menghapus tugas
+    @ApiOperation({summary: 'Menghapus tugas'})
     @Delete(':id')
     remove(@Param("id") id: string, @Request() req: any) {
         const userId = req.user.id || req.user._id || req.user.sub;
         return this.todosService.remove(id, userId);
     }
 
+    @ApiOperation({summary: 'Menampilkan daftar tugas berdasarkan ID grup'})
     @Get('group/:groupId')
     async getTodosByGroup(@Param('groupId') groupId: string) {
         return this.todosService.getTodosByGroup(groupId);
     }
 
+    @ApiOperation({summary: 'Menambahkan komentar pada tugas grup'})
     @Post(':id/comments')
     async addComment(
         @Param('id') todoId: string,
