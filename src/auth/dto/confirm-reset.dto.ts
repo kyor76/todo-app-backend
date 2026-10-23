@@ -9,6 +9,7 @@ export class ConfirmResetDto {
     @IsString()
     token: string;
 
+    @ApiProperty({ example: '@Riko123-', description: 'Memaksa user agar menggunakan password kuat' })
     @IsNotEmpty({ message: 'Password baru tidak boleh kosong! '})
     @Matches(/^(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]{8,}$/, {
         message: 'Password minimal 8 karakter dan harus mendukung setidaknya satu angka dan satu karakter spesial (@$!%*?&-_).'
